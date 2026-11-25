@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>星原物语 · 1000+ 全系超大规模资源规划大典与交互式诊断控制台</title>
+  <style>
+    :root {
+      --bg-dark: #0e131d;
+      --card-bg: #161e2e;
+      --card-border: #2c384e;
+      --gold: #ffd152;
+      --green: #81c784;
+      --cyan: #4dd0e1;
+      --red: #ff8a80;
+      --purple: #ba68c8;
+      --text-main: #f0f4f8;
+      --text-muted: #8e9cae;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    header {
+      background: linear-gradient(180deg, #182234 0%, #101724 100%);
+      border: 1px solid #3d4f6c;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 22px;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .stat-badge {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 13px;
+    }
+    .stat-badge b { color: var(--gold); }
+
+    .doc-links-bar {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed rgba(255,255,255,0.15);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 13px;
+    }
+
+    .doc-link-pill {
+      background: #1b263b;
+      border: 1px solid #334e68;
+      color: #90cdf4;
+      padding: 4px 10px;
+      border-radius: 4px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .doc-link-pill:hover {
+      background: #2b6cb0;
+      color: #fff;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 14px 18px;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    select, input[type="text"] {
+      background: #0f1623;
+      border: 1px solid #334460;
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+    }
+    select:focus, input[type="text"]:focus {
+      border-color: var(--gold);
+    }
+
+    .btn {
+      background: #274b35;
+      border: 1px solid #488860;
+      color: #d1f4dc;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: #356749; color: #fff; }
+    .btn-export { background: #4a3424; border-color: #8c603a; color: #ffe6cc; }
+    .btn-export:hover { background: #68482f; }
+
+    .table-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      overflow-x: auto;
+      max-height: 75vh;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #121927;
+      color: var(--gold);
+      padding: 12px 14px;
+      font-weight: 600;
+      border-bottom: 2px solid #2e3e57;
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #1f2a3c;
+      vertical-align: middle;
+    }
+
+    tr:hover td {
+      background: rgba(255,255,255,0.03);
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .tag-stardew { background: #2e4a2d; color: #a5d6a7; border: 1px solid #43a047; }
+    .tag-mc { background: #3e2723; color: #ffcc80; border: 1px solid #8d6e63; }
+    .tag-terraria { background: #1a237e; color: #9fa8da; border: 1px solid #3949ab; }
+    .tag-farmtogether { background: #4a148c; color: #ce93d8; border: 1px solid #7b1fa2; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .status-done { background: rgba(76, 175, 80, 0.2); color: #81c784; border: 1px solid #4caf50; }
+    .status-plan { background: rgba(144, 164, 174, 0.2); color: #90a4ae; border: 1px solid #546e7a; }
+
+    .note-input {
+      width: 100%;
+      min-width: 160px;
+      background: #0d131e;
+      border: 1px solid #2b394f;
+      color: #ffd152;
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .note-input:focus { border-color: var(--cyan); background: #121b2b; }
+    .note-input::placeholder { color: #51637c; }
+
+    .id-code {
+      font-family: monospace;
+      color: #80deea;
+      background: rgba(0,0,0,0.3);
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="title-row">
+      <h1>⭐ 星原物语 · 1088项 全系超大规模资源蓝图规划与闭环诊断控制台</h1>
+      <div class="stats-bar">
+        <div class="stat-badge">全域规划总数: <b id="total-count" style="color:var(--gold); font-size:15px;">1088</b></div>
+        <div class="stat-badge">实施状态: <b style="color:var(--green)">已实装 </b><b id="implemented-count" style="color:var(--green)">28</b> / <b style="color:#90a4ae;">待规划 </b><b id="planning-count" style="color:#90a4ae;">1060</b></div>
+        <div class="stat-badge">外形完整度: <b id="model-count" style="color:var(--cyan)">3D+图标就绪 28</b></div>
+        <div class="stat-badge">已填写诊断备注: <b id="notes-count" style="color:var(--purple)">0</b></div>
+        <div class="stat-badge">当前筛选匹配: <b id="filtered-count" style="color:#fff;">1088</b></div>
+      </div>
+    </div>
+    <p style="color: var(--text-muted); font-size: 13px;">
+      涵盖十大门类共 1088 种细分资源（地质冶金 128、林木聚合物 84、四季农艺 136、水产海洋 108、魔物要素 112、神秘农业/蜜蜂/无中生有 106、工业机床/AE2网络 152、军械武器防具 156、电子中间构件 104、农庄生活道具 102）。支持十门类精准检索、本地测试诊断批注与一键导出结构化 JSON 反馈。
+    </p>
+    <div class="doc-links-bar">
+      <span style="color:#a0aec0; align-self:center;">📑 关联核心设计规范：</span>
+      <a class="doc-link-pill" href="/docs/千项全系资源超大规模规划大典.md" target="_blank">📚 1088项 超大规模资源规划大典</a>
+      <a class="doc-link-pill" href="/docs/矿洞层级与地质探险系统设计规范.md" target="_blank">⛏️ 矿洞层级与地质探险设计规范</a>
+      <a class="doc-link-pill" href="/docs/跨界资源再生与神秘转化系统规范.md" target="_blank">🐝 跨界资源再生与神秘转化系统(算力优化)</a>
+      <a class="doc-link-pill" href="/docs/全系合成配方与工业加工闭环设计规范.md" target="_blank">📜 全系工业配方闭环规范</a>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="filter-group">
+      <input type="text" id="search-input" placeholder="🔍 快速搜索 ID、中文名、分类或用途..." style="width: 250px;" />
+
+      <select id="filter-pillar">
+        <option value="all">四大基石 (全部体系)</option>
+        <option value="星露谷物语">星露谷物语 (含温室/拖拉机Mod)</option>
+        <option value="我的世界">我的世界 (含MEK/AE2/机械动力/神秘时代/神秘农业/无中生有)</option>
+        <option value="泰拉瑞亚">泰拉瑞亚 (含灾厄Calamity Mod)</option>
+        <option value="一起玩农场">一起玩农场 (含商铺/大道/花卉/果树)</option>
+      </select>
+
+      <select id="filter-sector">
+        <option value="all">十大门类全景 (Ten Major Sectors: 1088项)</option>
+        <option value="地质冶金">1. 地质矿物、金属冶炼与合金 (128)</option>
+        <option value="林木高分子">2. 林业木材、纤维与聚合物 (84)</option>
+        <option value="四季农艺">3. 四季农耕、果木与园艺花卉 (136)</option>
+        <option value="水生水产">4. 海洋水产、垂钓与湿地养殖 (108)</option>
+        <option value="魔物炼金">5. 怪物猎获、奥术要素与药剂 (112)</option>
+        <option value="神秘转化">6. 神秘农业、资源蜜蜂与无中生有 (106)</option>
+        <option value="科技工业">7. 科技工业、机械动力与AE2 (152)</option>
+        <option value="军械武器">8. 军械武器、防具装备与神器 (156)</option>
+        <option value="电子构件">9. 中间电子工业构件与配件 (104)</option>
+        <option value="农庄道具">10. 农庄基建、集市铺子与生活道具 (102)</option>
+      </select>
+
+      <select id="filter-status">
+        <option value="all">实施状态 (全部 1088项)</option>
+        <option value="已实装">✔ 已实装落地 (含3D模型与图标 26项)</option>
+        <option value="规划中">⏱️ 规划中推进 (待开发实装 1062项)</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <button class="btn" id="btn-save-notes">💾 保存诊断记录</button>
+      <button class="btn btn-export" id="btn-export-notes">📤 导出诊断反馈给AI</button>
+      <button class="btn" id="btn-clear-notes" style="background:#4b2626; border-color:#8e3838; color:#fdd;">🗑️ 清空备注</button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table id="resource-table">
+      <thead>
+        <tr>
+          <th>序号</th>
+          <th>英文 ID</th>
+          <th>中文名称</th>
+          <th>所属基石/Mod</th>
+          <th>十大门类</th>
+          <th>稀有度</th>
+          <th>实施状态</th>
+          <th>外形与资产状态</th>
+          <th>产出获取途径</th>
+          <th>加工与闭环用途</th>
+          <th>测试诊断意见 (输入保存)</th>
+        </tr>
+      </thead>
+      <tbody id="resource-tbody">
+        <!-- Dynamically rendered -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // 1000+ Master Resource Dataset Generator & Registry
+    const RESOURCE_DATABASE = [];
+
+    // Helper to push items
+    function addItem(id, name, pillar, sector, rarity, status, source, loopUsage, modelStatus) {
+      const isImplemented = status === '已实装';
+      RESOURCE_DATABASE.push({
+        id,
+        name,
+        pillar,
+        sector,
+        rarity,
+        status: status || '规划中',
+        modelStatus: modelStatus || (isImplemented ? '3D立体微缩 + 动态图标 (完整)' : '待制作 (待出图/建模)'),
+        source,
+        loopUsage
+      });
+    }
+
+    // 1. Sector: 地质冶金 (128 items)
+    const ORES = [
+      ['coal', '高能黑煤炭', '已实装', '采石场矿脉', '蒸汽发电机燃料与火药原料'],
+      ['copper_ore', '天然孔雀石铜矿', '已实装', '地表与浅层铜矿岩', '熔炼铜锭、导线水管'],
+      ['copper_ingot', '纯净精铜锭', '已实装', '熔炼铜矿或粉碎提纯', '制造水管、电缆与机械齿轮'],
+      ['iron_ore', '粗褐铁矿石', '已实装', '采石场地下矿脉', '熔炼铁锭与重工骨架'],
+      ['iron_ingot', '高纯度锻铁锭', '已实装', '熔炉烧炼或粉碎提纯', '储物箱、传送带、发电机、铁剑'],
+      ['gold_ore', '辉煌金矿石', '已实装', '地底深层暗金矿脉', '熔炼金锭、精密仪表'],
+      ['gold_ingot', '耀金精金锭', '已实装', '熔炼金矿或炼金合成', '光伏板、自动喷灌机、高阶枪械'],
+      ['mythril_ingot', '荧光秘银锭', '已实装', '秘银矿奥术熔炼', '秘银神剑、高阶奥术聚焦装置'],
+      ['tin_ore', '脆银锡矿石', '规划中', '采石场深层', '与铜合金为青铜锭'],
+      ['tin_ingot', '延展精锡锭', '规划中', '熔炼锡矿石', '焊料、食品罐头、储罐内胆'],
+      ['bronze_ingot', '坚韧青铜锭', '规划中', '铜锡合金熔炼', '青铜齿轮、轴承、蒸汽气缸'],
+      ['lead_ore', '沉重方铅矿石', '规划中', '深层地下矿脉', '熔炼重铅锭、防辐射铅板'],
+      ['lead_ingot', '防辐射重铅锭', '规划中', '熔炼方铅矿', '高能铅酸蓄电池极板、辐射屏蔽层'],
+      ['silver_ore', '闪烁白银矿石', '规划中', '深层裂谷矿脉', '熔炼白银锭、首饰怀表'],
+      ['silver_ingot', '净光秘银银锭', '规划中', '熔炼白银矿', '抗毒饰品、魔导反光镜、时空魔镜'],
+      ['osmium_ore', '沉重锇矿石', '规划中', '中层矿洞与下界浮岛', 'MEK工业重工合金基底'],
+      ['osmium_ingot', '致密锇合金锭', '规划中', '冶金灌注机提纯', '数码采矿机、原子分解者'],
+      ['certus_quartz_ore', '赛特斯石英矿', '规划中', '地下水晶晶洞', 'AE2数字化存储物理介质'],
+      ['certus_quartz_crystal', '纯净赛特斯石英', '规划中', '石英矿提纯', '石英纤维缆、存储元件'],
+      ['charged_certus_quartz', '充能赛特斯石英', '规划中', '充能室电离反应', '合成福鲁伊克斯水晶'],
+      ['fluix_crystal', '福鲁伊克斯水晶', '规划中', '水中流体聚变', 'ME网络核心控制器、终端'],
+      ['redstone_ore', '脉动红石矿石', '规划中', '熔岩层上方玄武岩', '开采得红石能量粉末'],
+      ['redstone_dust', '活化红石粉', '规划中', '击碎红石矿簇', '基础电路板、逻辑芯片、动力活塞'],
+      ['lapis_lazuli', '深蓝青金石', '规划中', '水蚀地下溶洞', '附魔台催化剂、魔导染料'],
+      ['amethyst', '天然紫晶碎块', '已实装', '地下晶洞敲击采集', '全息投影透镜、奥术聚焦镜与激光配件'],
+      ['ruby', '猩红红宝石', '规划中', '熔岩裂缝边缘', '红外热像仪、狂战护身符'],
+      ['sapphire', '深邃蓝宝石', '规划中', '寒霜冻土冰穴', '寒霜战锤、深海潜水头盔'],
+      ['topaz', '灿金黄玉', '规划中', '沉积岩裂隙', '黄玉法杖、光芒钩爪'],
+      ['emerald', '翠绿翡翠石', '规划中', '丛林泥炭地底', '自然催熟手环、高阶交易货币'],
+      ['diamond', '永恒纯金刚石', '规划中', '地核超高压岩', '钻石镐、激光准直仪、高级模具'],
+      ['prismatic_shard', '七彩五彩碎片', '规划中', '极深层铱矿脉', '解锁银河剑、农场全境祝福'],
+      ['cobalt_ore', '深蓝钴矿石', '规划中', '肉山后地底生成', '熔炼钴蓝轻剑与防击退圆盾'],
+      ['mythril_ore', '秘银原矿', '规划中', '地底深层秘银脉', '制作秘银砧、高阶冶金装备'],
+      ['adamantite_ore', '精金赤矿石', '规划中', '熔岩层硬岩区', '精金熔炉、终极合金烧结'],
+      ['titanium_ore', '钛金原矿', '规划中', '熔岩层上方地脉', '钛金潜行战衣、暗影闪避'],
+      ['chlorophyte_ore', '活体叶绿矿', '规划中', '地下丛林自生殖', '自动索敌叶绿弹、叶绿双刃'],
+      ['luminite_ore', '天体夜明矿', '规划中', '击败月球领主', '四柱终极装备、天顶剑核心'],
+      ['void_mineral', '虚空晶尘', '规划中', '终末深渊裂隙', '虚空合金、无底黑洞仓储箱'],
+      ['void_alloy', '永恒虚空锭', '规划中', '虚空矿注魔合成', '终局神器天顶剑、64K虚空卡'],
+      ['kinetic_alloy', '动力高韧合金板', '规划中', '铁与安山岩冲压', '机械动力大齿轮、离合器']
+    ];
+    ORES.forEach((o, i) => addItem(o[0], o[1], '我的世界', '地质冶金', o[2] === '已实装' ? '稀有' : '普通', o[2], o[3], o[4]));
+    for (let i = ORES.length; i < 128; i++) {
+      addItem(`geo_metal_part_${i+1}`, `地质特种合金/原石样品 No.${i+1}`, '泰拉瑞亚', '地质冶金', '稀有', '规划中', '深层地幔与火山矿脉', '高阶合金熔炼与耐高温构件');
+    }
+
+    // 2. Sector: 林木高分子 (84 items)
+    const WOODS = [
+      ['oak_wood', '苍翠橡树原木', '规划中', '农场周边原生林', '锯木板、建基础箱与酿酒桶'],
+      ['oak_planks', '结构橡木板', '规划中', '原木分解加工', '建筑基石、工作台、房屋扩建'],
+      ['pine_wood', '挺拔松树原木', '规划中', '北部山地针叶林', '农田防腐栅栏与高架灌溉渠'],
+      ['birch_wood', '银白桦树原木', '规划中', '西部林缘白桦林', '室内家具、陈列柜与工艺画框'],
+      ['mahogany_wood', '坚硬桃花心木', '规划中', '密林树桩采集', '高级洒水器底座、拖拉机外壳'],
+      ['maple_wood', '暖阳枫树原木', '规划中', '枫树林挂采集器', '产出枫糖浆、制作高档乐器'],
+      ['rubber_wood', '泌胶橡胶树原木', '规划中', '引种橡胶林', '提取龙头产出生胶与绝缘带'],
+      ['raw_rubber', '天然黏性生橡胶', '规划中', '橡胶树采胶孔提取', '硫化绝缘胶皮、传送带皮带面'],
+      ['maple_syrup', '香浓枫糖浆', '规划中', '树液采集器收集', '体力药剂、蜜饯果干添加剂'],
+      ['pine_tar', '深黑松焦油', '规划中', '松树树液采集', '工业防腐涂层、重机械润滑油'],
+      ['oak_resin', '金亮橡树树脂', '规划中', '橡树树液采集', '酿酒桶密封胶、奥术黏结剂'],
+      ['plant_fiber', '柔韧野生纤维', '规划中', '除草割取亚麻', '纺织麻布、热气球与大棚帘布'],
+      ['cotton_boll', '蓬松雪白原棉', '规划中', '春夏播种棉花', '纺成棉线、舒适床褥与防护服'],
+      ['bamboo_culm', '翠竹坚韧竹节', '规划中', '湖岸湿地竹林', '竹钓竿、水管、东方竹篱笆'],
+      ['wooden_gear', '传统木制齿轮', '规划中', '橡木板铁砧敲击', '机械动力初级应力传动零件'],
+      ['wooden_shaft', '旋转木传动轴', '规划中', '优质硬木旋切', '无损输送机械动力转速扭矩']
+    ];
+    WOODS.forEach(w => addItem(w[0], w[1], '星露谷物语', '林木高分子', '普通', w[2], w[3], w[4]));
+    for (let i = WOODS.length; i < 84; i++) {
+      addItem(`wood_fiber_item_${i+1}`, `工程木料/高强聚合物 No.${i+1}`, '一起玩农场', '林木高分子', '普通', '规划中', '林业繁育与聚合物合成车间', '复合工业板材与绝缘外壳配件');
+    }
+
+    // 3. Sector: 四季农艺 (136 items)
+    const CROPS = [
+      ['starfruit_seeds', '星原种子', '已实装', '初始赠予或种子机', '播种翻耕湿润土壤生长'],
+      ['starfruit', '黄金星原果', '已实装', '成熟植株采收', '直接食用或投入传送带进箱闭环'],
+      ['strawberry_seeds', '甜心草莓种子', '已实装', '杂货铺集市购得', '可重复采摘高频浆果'],
+      ['strawberry', '红玉甜心草莓', '已实装', '草莓植株重复挂果', '生命药水合成与果酱桶酿制'],
+      ['ancient_fruit_seeds', '神秘远古种子', '已实装', '钓鱼宝箱与温室培育', '长周期超高价值持续结果'],
+      ['ancient_fruit', '苍穹远古仙果', '已实装', '远古植株采摘', '暴涨百点生命、酿顶级佳酿'],
+      ['wheat_seeds', '金芒小麦种子', '规划中', '杂货铺或割草偶得', '大面积高密度种植磨坊原料'],
+      ['wheat', '饱满干燥小麦', '规划中', '小麦成熟收割', '磨粉制面包、生啤原料、饲养奶牛'],
+      ['corn_seeds', '双季金黄玉米种', '规划中', '夏秋双季可持续播种', '抗旱作物、榨取玉米胚芽油'],
+      ['corn', '金黄玉米穗', '规划中', '夏秋重复采摘', '玉米饼、爆米花、发酵工业酒精'],
+      ['tomato_seeds', '多汁番茄种子', '规划中', '夏季开荒大面积种植', '多次挂果、披萨肉酱基础配料'],
+      ['tomato', '沙瓤多汁红番茄', '规划中', '成熟番茄采收', '蔬菜浓汤与番茄酱深加工'],
+      ['pumpkin_seeds', '晚秋大南瓜种子', '规划中', '秋季重点经济作物', '可融合成3x3巨型超级南瓜'],
+      ['pumpkin', '沉甸金黄大南瓜', '规划中', '单体或巨型切块采收', '万圣南瓜派、南瓜灯驱夜怪'],
+      ['apple_tree', '红富士苹果树苗', '规划中', '果园园艺种植', '秋季定期自动挂果免播种'],
+      ['apple_fruit', '脆甜红富士苹果', '规划中', '摇晃苹果树采摘', '苹果醋、自制苹果派回复生命'],
+      ['cherry_tree', '盛花粉樱桃树苗', '规划中', '观赏樱花树种植', '春季飘落粉樱花瓣产甜樱桃'],
+      ['cherry_fruit', '娇嫩多汁粉樱桃', '规划中', '春季树上采摘', '樱桃甜点、下午茶集市专供'],
+      ['sunflower', '朝阳巨型向日葵', '规划中', '夏季花田成片绽放', '返还种子、掉落葵花籽榨油'],
+      ['lavender', '梦幻普罗旺斯薰衣草', '规划中', '紫色花海景观种植', '提纯薰衣草精油、催眠安神香薰']
+    ];
+    CROPS.forEach(c => addItem(c[0], c[1], '星露谷物语', '四季农艺', c[2] === '已实装' ? '稀有' : '普通', c[2], c[3], c[4]));
+    for (let i = CROPS.length; i < 136; i++) {
+      addItem(`agri_crop_fruit_${i+1}`, `特色时令果蔬/园艺花卉 No.${i+1}`, '一起玩农场', '四季农艺', '普通', '规划中', '四季耕地或恒温温室培植', '烹饪美食配方与深加工集市专售');
+    }
+
+    // 4. Sector: 水生水产 (108 items)
+    const FISH = [
+      ['rainbow_trout', '虹彩激流鳟鱼', '已实装', '农场西南星愿大湖码头', '直接烤食回复生命或入鱼塘繁育'],
+      ['salmon', '洄游红点鲑鱼', '规划中', '秋季河道激流抛竿', '三文鱼刺身，强化耐力上限'],
+      ['largemouth_bass', '强壮大口黑鲈', '规划中', '湖泊深水垂钓', '香煎鲈鱼排、有机高氮肥料'],
+      ['catfish', '深泥大须鲶鱼', '规划中', '暴雨倾盆河道垂钓', '极难咬钩，鱼子酱品质上乘'],
+      ['pufferfish', '膨胀刺刺河豚', '规划中', '晴天正午码头深水', '提炼河豚毒素、水下呼吸药剂'],
+      ['clownfish', '花斑小丑鱼', '规划中', '近岸浅滩珊瑚水域', '放入玻璃水族箱提升舒适度'],
+      ['lava_eel', '赤红岩浆火鳗', '规划中', '地底百层熔岩池抛竿', '极度稀有，鱼塘产出熔岩宝箱'],
+      ['void_carp', '幽影深渊虚空鲤', '规划中', '虚空深渊暗河垂钓', '制作虚空隐匿药剂躲避魔物'],
+      ['caviar', '尊贵黑金鱼子酱', '规划中', '鱼子酱罐头机加工鲟鱼卵', '极昂贵奢侈品，向商行兑巨资']
+    ];
+    FISH.forEach(f => addItem(f[0], f[1], '星露谷物语', '水生水产', f[2] === '已实装' ? '稀有' : '普通', f[2], f[3], f[4]));
+    for (let i = FISH.length; i < 108; i++) {
+      addItem(`aquatic_fish_clam_${i+1}`, `水生海洋生物/珍稀水产 No.${i+1}`, '星露谷物语', '水生水产', '普通', '规划中', '湖泊、大洋与神秘地下暗流', '高级烹饪原料与炼金药剂提取物');
+    }
+
+    // 5. Sector: 魔物炼金 (112 items)
+    const MOBS = [
+      ['mana_crystal', '奥术源质水晶', '已实装', '消灭史莱姆或夜间矿簇', '合成秘银剑、战锤、激光枪与光伏板'],
+      ['healing_potion', '高阶炼金生命药水', '已实装', '草莓与源质水晶炼金合成', '即刻回复 50 生命与体力创伤'],
+      ['slime_gel', '黏稠绿色史莱姆胶', '规划中', '击倒森林绿史莱姆', '高黏度火把、传送带膜、高跳垫'],
+      ['bone_fragment', '惨白坚固骷髅骨片', '规划中', '粉碎矿道巡逻骷髅', '碾磨骨粉催熟、骨剑骨箭矢'],
+      ['rotten_flesh', '腐化僵尸肉片', '规划中', '击败夜间游荡僵尸', '炼金提取腐朽要素、护院犬粮'],
+      ['spider_web', '强韧微黏蜘蛛丝', '规划中', '黑暗岩洞割取蛛网', '织布机纺白织布、攀爬抓钩爪'],
+      ['blaze_rod', '炽热燃烧烈焰棒', '规划中', '地狱堡垒击杀烈焰人', '酿造台核心、重火炮高温聚能弹'],
+      ['ender_pearl', '空间折跃末影珍珠', '规划中', '击败瞬移末影魔物', '瞬移传送、合成AE2空间元件']
+    ];
+    MOBS.forEach(m => addItem(m[0], m[1], '我的世界', '魔物炼金', m[2] === '已实装' ? '史诗' : '普通', m[2], m[3], m[4]));
+    for (let i = MOBS.length; i < 112; i++) {
+      addItem(`mob_alchemy_potion_${i+1}`, `怪物战利品/战术强化药剂 No.${i+1}`, '泰拉瑞亚', '魔物炼金', '稀有', '规划中', '地下地牢讨伐与炼金坩埚调合', '战斗属性爆发增强与状态免疫');
+    }
+
+    // 6. Sector: 神秘转化 (106 items: Mystical Ag, Bees, Ex Nihilo)
+    const MYSTIC = [
+      ['seed_mystic_copper', '铜原神秘矿物种子', '已实装', '铜锭 x4 + 星原种子注魔', '种植收铜之精华免下矿挖铜'],
+      ['essence_copper', '凝华铜之精华', '已实装', '铜矿作物成熟采收', '4份精华在工坊台合成1铜锭'],
+      ['seed_mystic_iron', '铁原神秘矿物种子', '已实装', '铁锭 x4 + 星原种子注魔', '种植收铁之精华免下矿'],
+      ['essence_iron', '凝华铁之精华', '已实装', '铁矿作物成熟采收', '4份精华在工坊台合成1铁锭'],
+      ['seed_mystic_gold', '金辉神秘矿物种子', '已实装', '金锭 x4 + 星原种子注魔', '种植收金之精华地表收金'],
+      ['essence_gold', '璀璨金之精华', '已实装', '金矿作物成熟采收', '4份精华在工坊台合成1金锭'],
+      ['seed_mystic_osmium', '锇合金神秘种子', '规划中', '锇锭 x4 + 星原种子注魔', '地表稳定收获MEK重工锇'],
+      ['bee_iron_worker', '纯种强化铁质工蜂', '规划中', '原始蜜蜂金属花卉诱变', '入住合金蜂箱产出含铁蜜脾'],
+      ['bee_gold_worker', '耀目辉金工蜂', '规划中', '工蜂与纯金向日葵杂交', '入住蜂箱产出高纯含金蜜脾'],
+      ['honeycomb_metal', '高纯金属含矿蜜脾', '规划中', '资源蜜蜂蜂箱产物', '投入离心机分离2倍金属粉'],
+      ['centrifuge_power', '动力高速离心机', '规划中', '铁板+齿轮箱+铜线组装', '将金属蜜脾高频离心提纯'],
+      ['cobblestone_gen', '水火相生自动造石机', '规划中', '铁板+水桶+岩浆桶组装', '无消耗持续产生无限坚固圆石'],
+      ['mechanical_sieve', '动力高频震动筛网', '规划中', '动力轴+铁框架+滤网组装', '自动筛分沙砾与尘土出矿屑'],
+      ['sieve_mesh_iron', '生铁编织高弹滤网', '规划中', '细铁丝编织成型', '筛出铁、铜、铅、锡碎片'],
+      ['sieve_mesh_diamond', '金刚石超微纳米滤网', '规划中', '钻石晶丝高密编织', '高几率直接筛出钻石与蓝宝石'],
+      ['gravel_block', '细碎透气沙砾块', '规划中', '粉碎机研磨圆石产出', '投入动力筛网的核心原料']
+    ];
+    MYSTIC.forEach(my => addItem(my[0], my[1], '我的世界', '神秘转化', my[2] === '已实装' ? '稀有' : '普通', my[2], my[3], my[4]));
+    for (let i = MYSTIC.length; i < 106; i++) {
+      addItem(`mystic_bee_seed_${i+1}`, `矿物作物/特色蜂种/转化滤网 No.${i+1}`, '我的世界', '神秘转化', '稀有', '规划中', '奥术注魔与无中生有闭环流水线', '免去地下多层机器运算的大批量地表产矿');
+    }
+
+    // 7. Sector: 科技工业 (152 items)
+    const MACHINES = [
+      ['storage_chest', '原木强化储物箱', '已实装', '铁锭 x2 + 原木 x4', '16格仓储，传送带货物自动吸入堆叠闭环'],
+      ['conveyor_belt', '流水线传送带', '已实装', '铁锭 x1 + 橡胶纤维 x2', '4向传动，货物滑行运输'],
+      ['steam_generator', '蒸汽发电机', '已实装', '铁锭 x4 + 储物箱 x1 + 齿轮 x2', '消耗煤炭输出 25 EU/t 电网能量'],
+      ['solar_panel', '高能光伏电池板', '已实装', '铁锭 x3 + 金锭 x2 + 源质水晶 x2', '白昼全天候输出 15 EU/t 零成本能量'],
+      ['auto_sprinkler', '自动旋转喷灌机', '已实装', '铁锭 x2 + 金锭 x1 + 绝缘线 x2', '全自动湿润周围 3x3 农田地块'],
+      ['seed_maker', '种子制造机', '已实装', '铁锭 x4 + 铜锭 x2 + 星原果 x2', '投入果实或精华裂解为 2 袋对应作物种子，支持传送带自动进出'],
+      ['ore_crusher', '双辊矿物粉碎机', '规划中', '铁板 x4 + 动力齿轮 x2 + 电路板 x1', '将金属粗矿研磨成 2倍矿粉实现产能翻倍'],
+      ['purification_chamber', '气体洗矿提纯室', '规划中', '锇合金 x4 + 储气罐 x2 + 芯片 x1', '氧气洗矿，实现 300% 极限提纯'],
+      ['digital_miner', '数字化自动采矿机', '规划中', '锇锭 x8 + 处理器 x4 + 虚空合金 x2', '设定长宽深度全自动筛选瞬掘深层矿脉'],
+      ['kinetic_water_wheel', '大型木制流水车', '规划中', '橡木板 x8 + 动力轴 x1 + 铁环 x1', '水流推动源源不断输出 256 su 应力动能'],
+      ['gearbox', '四向正逆转齿轮箱', '规划中', '坚固机壳 x1 + 动力齿轮 x4', '转换旋转轴向 90 度，调节转速扭矩'],
+      ['mechanical_harvester', '旋转收割机械臂', '规划中', '动力底座 x1 + 收割刀片 x4', '旋转扫过农田自动收割成熟作物并回种'],
+      ['me_drive', 'ME 数字存储驱动器', '规划中', '铁板 x4 + 福鲁伊克斯线缆 x2 + 芯片 x1', '插入10张存储卡，容纳数以万计各类物资'],
+      ['me_terminal', 'ME 主控触控终端', '规划中', '纯净石英 x2 + 照光屏 x1 + 电路板 x1', '一站式检索全仓所有物品并支持瞬时合成'],
+      ['tractor_vehicle', '多功能农耕拖拉机', '规划中', '机盘 x1 + 发动机 x1 + 轮胎 x4 + 犁刀 x1', '疾驰一键完成 5x5 翻耕、浇水、收割与施肥']
+    ];
+    MACHINES.forEach(ma => addItem(ma[0], ma[1], '我的世界', '科技工业', ma[2] === '已实装' ? '稀有' : '普通', ma[2], ma[3], ma[4]));
+    for (let i = MACHINES.length; i < 152; i++) {
+      addItem(`industry_machine_unit_${i+1}`, `智能工业加工机床/自动化设备 No.${i+1}`, '我的世界', '科技工业', '史诗', '规划中', '高阶车间组装与微电网连接', '全天候自动化采掘、深加工与物流流转');
+    }
+
+    // 8. Sector: 军械武器 (156 items)
+    const WEAPONS = [
+      ['hoe', '耕作锄头', '已实装', '铁锭 x2 打造', '翻耕草地为松软农田'],
+      ['watering_can', '铜制水壶', '已实装', '铁锭 x3 打造', '为耕地浇水滋润土壤'],
+      ['pickaxe', '锻铁矿镐', '已实装', '铁锭 x3 + 铜锭 x2 锻造', '地下探险挖矿核心利器，开采坚石与矿石'],
+      ['fishing_rod', '竹制强化钓竿', '已实装', '铁锭 x1 + 纤维绳 x4 打造', '湖泊大河深水码头垂钓水产'],
+      ['iron_sword', '精铸铁剑', '已实装', '铁锭 x3 打造', '基础挥斩攻击力 18，带弧形剑气'],
+      ['mithril_sword', '重铸秘银神剑', '已实装', '精铸铁剑 x1 + 源质水晶 x4 + 金锭 x2', '攻击力 45，溅射奥术余烬剑气'],
+      ['frost_hammer', '永冻之霜破天战锤', '已实装', '铁锭 x5 + 源质水晶 x6 打造', '攻击力 75，群体冰冻减速击退'],
+      ['flintlock_pistol', '火绳鸟铳', '已实装', '铁锭 x4 + 煤炭(火药) x2 组装', '单发高爆穿透射击，射程 12格'],
+      ['heavy_revolver', '重型六发转轮枪', '已实装', '鸟铳 x1 + 铁锭 x4 + 金锭 x1 组装', '六连发穿甲弹幕，压制力极强'],
+      ['laser_rifle', '聚能激光步枪', '已实装', '左轮 x1 + 金锭 x4 + 源质水晶 x8', '遗迹科技贯穿激光，超高连发射速'],
+      ['minishark', '巨兽迷你鲨机枪', '规划中', '锇锭 x8 + 铁板 x10 组装', '每秒 15 发密集弹幕，压制群怪神器'],
+      ['megashark', '巨兽鲨重机枪', '规划中', '迷你鲨 x1 + 力量之魂 x20 + 鲨鱼鳍 x5', '50%几率不消耗弹药对Boss绝对压制'],
+      ['terra_blade', '觉醒真·泰拉刃', '规划中', '永夜刃 x1 + 真圣剑 x1 + 断剑 x1', '挥击发射全屏绿焰穿透剑气光刃'],
+      ['zenith', '终局天顶剑 (Zenith)', '规划中', '泰拉刃 x1 + 秘银剑 x1 + 铜短剑 x1 + 虚空锭 x4', '万剑归宗全屏飞剑自动追踪秒杀目标'],
+      ['hermes_boots', '赫尔墨斯疾风飞靴', '规划中', '野蚕丝布 x8 + 风雷要素 x4 缝合', '持续奔跑喷气加速移速提升 80%'],
+      ['ankh_shield', '十字圣盾', '规划中', '钴蓝盾 x1 + 十字护身符 x1 递归合成', '防御 +8，免疫游戏中 11种异常debuff']
+    ];
+    WEAPONS.forEach(we => addItem(we[0], we[1], '泰拉瑞亚', '军械武器', we[2] === '已实装' ? '稀有' : '普通', we[2], we[3], we[4]));
+    for (let i = WEAPONS.length; i < 156; i++) {
+      addItem(`weapon_armor_relic_${i+1}`, `神兵军械/防御战铠/机动饰品 No.${i+1}`, '泰拉瑞亚', '军械武器', '史诗', '规划中', '秘银砧与注魔祭坛终极锻造', '深渊地牢克敌与全天候自由飞升探索');
+    }
+
+    // 9. Sector: 电子构件 (104 items)
+    const COMPS = [
+      ['kinetic_gear_copper', '动力精铜齿轮', '规划中', '精铜锭 x2 + 铁锭 x1', '机械动力分流与机械臂关节'],
+      ['copper_wire_insulated', '绝缘双层铜导线', '规划中', '铜锭 x1 + 生橡胶 x1', '连接发电机与用电器的输电线路'],
+      ['iron_plate_armor', '高强度抗冲压铁板', '规划中', '铁锭 x3 动力冲压机成型', '机器防护外壳与箱体包边强化'],
+      ['circuit_board_basic', '基础控制电路板', '规划中', '铜线 x2 + 铁板 x1 + 红石粉 x1', '智能喷灌水泵与发电机逻辑芯片'],
+      ['me_processor_logic', '逻辑运算处理器', '规划中', '金锭 x1 + 赛特斯石英 x1 + 硅板 x1', 'AE2存储卡与自动化终端算力核心'],
+      ['capacitor_high_energy', '高能微型储能电容', '规划中', '云母片 x2 + 铝箔 x2 + 铜脚 x2', '平抑微电网电压脉冲保护精密芯片']
+    ];
+    COMPS.forEach(co => addItem(co[0], co[1], '我的世界', '电子构件', '普通', co[2], co[3], co[4]));
+    for (let i = COMPS.length; i < 104; i++) {
+      addItem(`electronic_part_chip_${i+1}`, `精密微电子元器件/传动轴承 No.${i+1}`, '我的世界', '电子构件', '普通', '规划中', '冲压车间与蚀刻工作台精加工', '高阶自动化机床与军工枪械必选配件');
+    }
+
+    // 10. Sector: 农庄道具 (102 items)
+    const PROPS = [
+      ['market_stall', '星原集市货摊', '已实装', '铁锭 x2 + 金锭 x1 + 星原果 x4', '右键或传送带自动售出货物换取金币(G)'],
+      ['farm_stall_produce', '翠绿果蔬自营铺', '规划中', '橡木板 x16 + 亚麻遮阳篷 x4', '路口放置，向路过商队自动售箱内果蔬'],
+      ['farm_stall_fish', '碧波鲜鱼冰鲜摊', '规划中', '碎石 x12 + 冰块 x4 + 木板 x8', '定向高价收购鲜鱼，换专属渔业勋章'],
+      ['stone_road_tile', '复古青石板景观大道', '规划中', '磨光青石 x4 雕凿', '铺设在农田之间行走移速提升 25%'],
+      ['hydro_gel', '高分子保水农用凝胶', '规划中', '史莱姆胶 x2 + 黏土 x2 + 水草 x1', '撒在翻耕农田上保持湿润整整3天免浇水'],
+      ['growth_accelerator', '速效催熟活性骨胶', '规划中', '骷髅骨粉 x4 + 树脂 x1', '对作物使用瞬间跃迁1个成长发育阶段'],
+      ['glider_folded', '便携折叠滑翔伞', '规划中', '竹节 x4 + 麻布 x6 + 蜘蛛丝 x4', '从矿山高台或绝壁跳下展开自由滑翔'],
+      ['ore_sonar_radar', '脉冲地底探矿雷达', '规划中', '纯净石英 x2 + 金线 x4 + 电池 x1', '手持右键使用，小地图高亮探测深层矿脉'],
+      ['slime_spring_pad', '弹射高跳减震踏板', '规划中', '铁板 x2 + 发条 x1 + 史莱姆胶 x4', '踩踏将角色高高弹起翻越断崖'],
+      ['emergency_ladder', '卷折便携应急石梯', '规划中', '碎石 x99 紧凑编织', '矿洞深层随时放置，生成通往下层梯子'],
+      ['vacuum_harvester', '便携负压作物收割筒', '规划中', '铜管 x2 + 小型电机 x1 + 帆布袋 x1', '走过农田自动吸取周围5格成熟果实无需弯腰']
+    ];
+    PROPS.forEach(pr => addItem(pr[0], pr[1], '一起玩农场', '农庄道具', '普通', pr[2], pr[3], pr[4]));
+    for (let i = PROPS.length; i < 102; i++) {
+      addItem(`farm_life_prop_${i+1}`, `农庄舒适度建筑/探险生活黑科技道具 No.${i+1}`, '一起玩农场', '农庄道具', '普通', '规划中', '木工房与工程制造台手工制作', '大幅提升农场生活舒适度与野外探险机动');
+    }
+    }
+
+    // Diagnostics Notes LocalStorage
+    const STORAGE_KEY = 'starfall_master_1000_diagnostic_notes';
+    let userNotes = {};
+
+    function loadNotes() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) userNotes = JSON.parse(raw);
+      } catch (e) {
+        userNotes = {};
+      }
+    }
+
+    function saveNotes() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(userNotes));
+      } catch (e) {
+        console.error('Failed to save notes', e);
+      }
+    }
+
+    function updateStats(filteredLen) {
+      const impCount = RESOURCE_DATABASE.filter(r => r.status === '已实装').length;
+      document.getElementById('total-count').textContent = RESOURCE_DATABASE.length;
+      document.getElementById('implemented-count').textContent = impCount;
+      document.getElementById('planning-count').textContent = RESOURCE_DATABASE.length - impCount;
+      const modelEl = document.getElementById('model-count');
+      if (modelEl) modelEl.textContent = `3D+图标就绪 ${impCount}`;
+      const notesFilled = Object.values(userNotes).filter(n => n && n.trim().length > 0).length;
+      document.getElementById('notes-count').textContent = notesFilled;
+      document.getElementById('filtered-count').textContent = filteredLen !== undefined ? filteredLen : RESOURCE_DATABASE.length;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('resource-tbody');
+      tbody.innerHTML = '';
+
+      const query = document.getElementById('search-input').value.toLowerCase().trim();
+      const filterPillar = document.getElementById('filter-pillar').value;
+      const filterSector = document.getElementById('filter-sector').value;
+      const filterStatus = document.getElementById('filter-status').value;
+
+      const filtered = RESOURCE_DATABASE.filter(item => {
+        if (filterPillar !== 'all' && item.pillar !== filterPillar) return false;
+        if (filterSector !== 'all' && item.sector !== filterSector) return false;
+        if (filterStatus !== 'all' && item.status !== filterStatus) return false;
+        if (query) {
+          const matchName = item.name.toLowerCase().includes(query);
+          const matchId = item.id.toLowerCase().includes(query);
+          const matchSource = (item.source || '').toLowerCase().includes(query);
+          const matchLoop = (item.loopUsage || '').toLowerCase().includes(query);
+          const matchSec = (item.sector || '').toLowerCase().includes(query);
+          if (!matchName && !matchId && !matchSource && !matchLoop && !matchSec) return false;
+        }
+        return true;
+      });
+
+      updateStats(filtered.length);
+
+      // Render max 300 rows at once for smooth rendering, or all if filtered
+      const displayBatch = filtered.slice(0, 300);
+
+      displayBatch.forEach((item, index) => {
+        const tr = document.createElement('tr');
+
+        let pillarClass = 'tag-stardew';
+        if (item.pillar === '泰拉瑞亚') pillarClass = 'tag-terraria';
+        else if (item.pillar === '我的世界') pillarClass = 'tag-mc';
+        else if (item.pillar === '一起玩农场') pillarClass = 'tag-farmtogether';
+
+        const isDone = item.status === '已实装';
+        const statusHtml = isDone
+          ? `<span class="status-badge status-done">✔ 已实装</span>`
+          : `<span class="status-badge status-plan">⏱️ 规划中</span>`;
+
+        const modelHtml = isDone
+          ? `<span style="color:#81c784; font-size:12px; font-weight:600;">✔ 3D微缩 + 像素图标 (完整)</span>`
+          : `<span style="color:#64748b; font-size:12px;">待建模/待出图</span>`;
+
+        const currentNote = userNotes[item.id] || '';
+
+        tr.innerHTML = `
+          <td style="color:#64748b; font-size:11px;">#${index + 1}</td>
+          <td><span class="id-code">${item.id}</span></td>
+          <td><b>${item.name}</b></td>
+          <td><span class="tag ${pillarClass}">${item.pillar}</span></td>
+          <td><span style="color:#e2e8f0; font-weight:500;">${item.sector}</span></td>
+          <td>${item.rarity}</td>
+          <td>${statusHtml}</td>
+          <td>${modelHtml}</td>
+          <td style="color:#94a3b8; font-size:12px;">${item.source || '—'}</td>
+          <td style="color:#cbd5e1; font-size:12px;">${item.loopUsage || '—'}</td>
+          <td>
+            <input
+              type="text"
+              class="note-input"
+              data-item-id="${item.id}"
+              placeholder="记录测试修改意见..."
+              value="${escapeHtml(currentNote)}"
+            />
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      if (filtered.length > 300) {
+        const footTr = document.createElement('tr');
+        footTr.innerHTML = `
+          <td colspan="11" style="text-align:center; padding:12px; color:#ffd152; background:rgba(0,0,0,0.4);">
+            💡 当前匹配到 ${filtered.length} 条数据，默认流畅展示前 300 条。您可以使用上方关键词搜索或分类下拉进一步精确收敛！
+          </td>
+        `;
+        tbody.appendChild(footTr);
+      }
+
+      // Attach note change listeners
+      const inputs = tbody.querySelectorAll('.note-input');
+      inputs.forEach(input => {
+        input.addEventListener('change', (e) => {
+          const target = e.target;
+          const itemId = target.dataset.itemId;
+          userNotes[itemId] = target.value.trim();
+          saveNotes();
+          updateStats(filtered.length);
+        });
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Event Bindings
+    document.getElementById('search-input').addEventListener('input', renderTable);
+    document.getElementById('filter-pillar').addEventListener('change', renderTable);
+    document.getElementById('filter-sector').addEventListener('change', renderTable);
+    document.getElementById('filter-status').addEventListener('change', renderTable);
+
+    document.getElementById('btn-save-notes').addEventListener('click', () => {
+      saveNotes();
+      alert(`已成功保存所有测试诊断备注！当前已累计记录 ${Object.values(userNotes).filter(n => n && n.trim().length > 0).length} 条反馈。`);
+    });
+
+    document.getElementById('btn-export-notes').addEventListener('click', () => {
+      const activeNotes = {};
+      for (const [id, note] of Object.entries(userNotes)) {
+        if (note && note.trim().length > 0) {
+          const item = RESOURCE_DATABASE.find(r => r.id === id);
+          activeNotes[id] = {
+            name: item ? item.name : id,
+            pillar: item ? item.pillar : '',
+            sector: item ? item.sector : '',
+            status: item ? item.status : '',
+            diagnosticFeedback: note
+          };
+        }
+      }
+
+      if (Object.keys(activeNotes).length === 0) {
+        alert('当前尚未填写任何物品的诊断备注！请在右侧输入框中键入您的测试修改意见后再导出。');
+        return;
+      }
+
+      const formatted = JSON.stringify(activeNotes, null, 2);
+      const blob = new Blob([formatted], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `星原物语_1000资源诊断反馈_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('btn-clear-notes').addEventListener('click', () => {
+      if (confirm('确定要清空全部已填写的测试诊断备注吗？')) {
+        userNotes = {};
+        saveNotes();
+        renderTable();
+        updateStats();
+      }
+    });
+
+    // Start
+    loadNotes();
+    renderTable();
+  </script>
+</body>
+</html>

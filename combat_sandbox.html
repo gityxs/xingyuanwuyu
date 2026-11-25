@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>星原物语 · 全武器弹幕物理沙盘与泰拉饰品配装实验室</title>
+  <style>
+    :root {
+      --bg-deep: #090d16;
+      --panel-bg: #111827;
+      --card-bg: #1a2234;
+      --border: #2d3b55;
+      --gold: #facc15;
+      --cyan: #38bdf8;
+      --purple: #c084fc;
+      --pink: #f472b6;
+      --emerald: #34d399;
+      --red: #f87171;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(circle at top, #131b2e 0%, var(--bg-deep) 65%);
+      color: var(--text);
+      padding: 18px;
+      line-height: 1.45;
+      min-height: 100vh;
+    }
+    header {
+      background: linear-gradient(135deg, rgba(24, 34, 56, 0.96), rgba(15, 23, 42, 0.98));
+      border: 1px solid #3b4f73;
+      border-radius: 12px;
+      padding: 16px 22px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    }
+    h1 {
+      font-size: 20px;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .subtitle {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+    .kpi-strip {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .kpi-pill {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 13px;
+      text-align: center;
+      min-width: 105px;
+    }
+    .kpi-pill .lbl { font-size: 11px; color: var(--muted); }
+    .kpi-pill .val { font-size: 17px; font-weight: 800; color: var(--cyan); }
+    .main-grid {
+      display: grid;
+      grid-template-columns: 330px 1fr 360px;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 1240px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 8px;
+    }
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .tab-btn {
+      background: var(--card-bg);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: rgba(56, 189, 248, 0.18);
+      color: var(--cyan);
+      border-color: var(--cyan);
+      font-weight: 700;
+    }
+    .weapon-list {
+      max-height: 520px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 4px;
+    }
+    .weapon-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .weapon-item:hover { border-color: #60a5fa; }
+    .weapon-item.active {
+      border-color: var(--gold);
+      background: linear-gradient(90deg, rgba(250, 204, 21, 0.15), rgba(30, 41, 59, 0.9));
+      box-shadow: 0 0 12px rgba(250, 204, 21, 0.2);
+    }
+    .weapon-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .weapon-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(192, 132, 252, 0.18);
+      color: var(--purple);
+      border: 1px solid rgba(192, 132, 252, 0.35);
+    }
+    .arena-wrap {
+      position: relative;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #334155;
+      background: #050810;
+    }
+    canvas#sandbox-canvas {
+      width: 100%;
+      height: 460px;
+      display: block;
+      cursor: crosshair;
+    }
+    .arena-toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .btn {
+      background: #1e293b;
+      color: var(--text);
+      border: 1px solid #475569;
+      padding: 6px 12px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn.primary { background: #0284c7; border-color: #38bdf8; }
+    .btn.active-toggle { background: #15803d; border-color: #4ade80; }
+    select {
+      background: #0f172a;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .slot-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+    }
+    .slot-row {
+      display: grid;
+      grid-template-columns: 1fr 120px;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .perk-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .perk-pill {
+      font-size: 11px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: 1px solid #2a344a;
+      background: rgba(15, 23, 42, 0.5);
+      color: #64748b;
+    }
+    .perk-pill.on {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.15);
+      color: #6ee7b7;
+      font-weight: 700;
+    }
+    .stat-box {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .stat-cell {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 6px 9px;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .dps-table-wrap {
+      margin-top: 16px;
+    }
+    .dps-bar-row {
+      display: grid;
+      grid-template-columns: 185px 95px 1fr 90px;
+      gap: 10px;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px dashed rgba(255,255,255,0.06);
+      font-size: 12px;
+    }
+    .bar-bg {
+      height: 10px;
+      background: #0f172a;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 5px;
+      background: linear-gradient(90deg, #0ea5e9, #a855f7, #f43f5e);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>⚔️ 星原物语 · 全武器弹幕物理沙盘与泰拉饰品配装实验室</h1>
+      <div class="subtitle">1:1 对齐真实战斗引擎数值 · 在独立实验室实时测试 39 把神兵弹幕物理（穿透 / 追踪 / 反弹 / 回旋 / 爆裂）与 5 槽饰品重铸词缀平衡</div>
+    </div>
+    <div class="kpi-strip">
+      <div class="kpi-pill"><div class="lbl">武器数 / 覆盖率</div><div class="val" id="kpi-weapons">39 / 100%</div></div>
+      <div class="kpi-pill"><div class="lbl">理论期望 DPS</div><div class="val" id="kpi-theo-dps" style="color:var(--gold)">--</div></div>
+      <div class="kpi-pill"><div class="lbl">沙盘实测 DPS</div><div class="val" id="kpi-live-dps" style="color:var(--emerald)">0</div></div>
+      <div class="kpi-pill"><div class="lbl">当前目标 TTK</div><div class="val" id="kpi-ttk" style="color:var(--pink)">-- 秒</div></div>
+    </div>
+  </header>
+
+  <div class="main-grid">
+    <!-- Left: Weapon Arsenal -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>🗡️ 全武器军械图鉴</span>
+        <select id="weapon-prefix-select" title="武器重铸词缀">
+          <option value="none">无词缀</option>
+          <option value="legendary">传奇 (+15%伤/+10%速/+8%暴)</option>
+          <option value="godly">超神 (+15%伤/+5%暴)</option>
+          <option value="demonic">恶魔 (+15%伤/+5%暴)</option>
+          <option value="rapid">疾速 (+15%速)</option>
+          <option value="heavy">沉重 (+10%伤/-10%速)</option>
+          <option value="broken">破损 (-30%伤/-20%速)</option>
+        </select>
+      </div>
+      <div class="filter-tabs" id="weapon-filters">
+        <button class="tab-btn active" id="tab-all-btn" data-cat="all">全部</button>
+        <button class="tab-btn" data-cat="melee">近战神兵</button>
+        <button class="tab-btn" data-cat="ranged">枪械重炮</button>
+        <button class="tab-btn" data-cat="magic">奥术法杖</button>
+      </div>
+      <div class="weapon-list" id="weapon-list"></div>
+    </div>
+
+    <!-- Center: Live Projectile Sandbox -->
+    <div class="panel">
+      <div class="panel-title">
+        <span id="selected-weapon-title">🎯 点击或按住画布瞄准发射测试</span>
+        <span class="badge" id="selected-weapon-behavior">弹道特征</span>
+      </div>
+      <div class="arena-wrap">
+        <canvas id="sandbox-canvas" width="760" height="460"></canvas>
+      </div>
+      <div class="arena-toolbar">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <button class="btn primary" id="btn-autofire">🔁 自动连发试射：关</button>
+          <button class="btn" id="btn-reset-targets">🔄 刷新靶场阵型</button>
+          <button class="btn" id="btn-clear-dmg">🧹 清空 DPS 统计</button>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <label style="font-size:12px; color:var(--muted);">TTK 模拟 Boss：</label>
+          <select id="boss-ttk-select">
+            <option value="12000">深渊海渊利维坦 (12,000 HP)</option>
+            <option value="8000">血肉之墙 (8,000 HP)</option>
+            <option value="15000">诡秘虚空看守者 (15,000 HP)</option>
+            <option value="22000">暮色冰雪女王 (22,000 HP)</option>
+            <option value="35000">月球领主 Moon Lord (35,000 HP)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Accessory 5-Slot Builder -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>💍 泰拉饰品五槽配装台</span>
+        <button class="btn" id="btn-endgame-preset" style="padding:3px 8px; font-size:11px;">✨ 一键终局毕业</button>
+      </div>
+      <div id="acc-slots-container"></div>
+      <label style="display:flex; align-items:center; gap:8px; font-size:12px; margin:8px 0; cursor:pointer; color:#fde047;">
+        <input type="checkbox" id="chk-golden-apple" /> 🌟 激活神话金苹果光环 (+50HP/+30%免伤/+3回血)
+      </label>
+      <div class="stat-box" id="player-stats-box"></div>
+      <div class="perk-grid" id="perk-matrix"></div>
+    </div>
+  </div>
+
+  <!-- Bottom: Full Arsenal DPS Curve Comparison -->
+  <div class="panel dps-table-wrap">
+    <div class="panel-title">
+      <span>📊 全武器实战平衡梯度与理论 DPS 横向对比（联动当前饰品与词缀实时重算）</span>
+      <span style="font-size:11px; color:var(--muted);">按理论有效 DPS 降序排列</span>
+    </div>
+    <div id="dps-ranking-list"></div>
+  </div>
+
+  <script>
+    const WEAPONS = [
+      // 近战神兵 (weapon_melee)
+      { id: 'zenith_blade', name: '天顶剑 (Zenith)', cat: 'melee', baseAtk: 260, cooldown: 0.18, crit: 0.60, speed: 38, range: 15, color: '#38bdf8', shape: 'zenith', behavior: 'pierce', tag: '5道飞剑穿刺回旋风暴' },
+      { id: 'voidmetal_sword', name: '虚空秘金魔刃', cat: 'melee', baseAtk: 210, cooldown: 0.18, crit: 0.18, speed: 25, range: 28, color: '#a855f7', shape: 'blade', behavior: 'pierce', tag: '穿透虚空剑气+吸血' },
+      { id: 'meowmere', name: '彩虹猫之刃 (Meowmere)', cat: 'melee', baseAtk: 200, cooldown: 0.18, crit: 0.18, speed: 24, range: 34, color: '#f472b6', shape: 'star', behavior: 'bounce', tag: '七彩喵星弹3次弹性反弹' },
+      { id: 'phantom_battleaxe', name: '幽冥幻影战斧', cat: 'melee', baseAtk: 195, cooldown: 0.26, crit: 0.18, speed: 26, range: 22, color: '#2dd4bf', shape: 'axe', behavior: 'boomerang', tag: '自旋幻影飞斧回旋斩' },
+      { id: 'star_wrath', name: '狂星之怒 (Star Wrath)', cat: 'melee', baseAtk: 190, cooldown: 0.18, crit: 0.18, speed: 32, range: 25, color: '#facc15', shape: 'star', behavior: 'rain', tag: '天降3颗暴击陨星爆破' },
+      { id: 'fiery_sword', name: '暮色炽焰巨剑', cat: 'melee', baseAtk: 180, cooldown: 0.26, crit: 0.25, speed: 22, range: 20, color: '#f97316', shape: 'blade', behavior: 'pierce', tag: '穿透2名敌人的炽烈火浪' },
+      { id: 'horsemans_blade', name: '无头骑士之刃', cat: 'melee', baseAtk: 170, cooldown: 0.22, crit: 0.18, speed: 24, range: 22, color: '#ea580c', shape: 'star', behavior: 'homing', tag: '挥砍召唤追踪南瓜恶灵' },
+      { id: 'solar_eruption', name: '日耀喷发 (Solar Eruption)', cat: 'melee', baseAtk: 165, cooldown: 0.28, crit: 0.45, speed: 28, range: 20, color: '#f97316', shape: 'blade', behavior: 'pierce', tag: '4穿日耀炎鞭爆裂冲击' },
+      { id: 'possessed_hatchet', name: '疯狂灵魂飞斧', cat: 'melee', baseAtk: 160, cooldown: 0.24, crit: 0.18, speed: 26, range: 28, color: '#a16207', shape: 'axe', behavior: 'homing', tag: '高速锁敌追踪战斧' },
+      { id: 'golem_fist', name: '石巨人之拳', cat: 'melee', baseAtk: 155, cooldown: 0.30, crit: 0.18, speed: 26, range: 22, color: '#d97706', shape: 'axe', behavior: 'boomerang', tag: '重装回旋飞拳高击退' },
+      { id: 'terra_blade', name: '泰拉刃 (Terra Blade)', cat: 'melee', baseAtk: 148, cooldown: 0.20, crit: 0.18, speed: 28, range: 26, color: '#22c55e', shape: 'blade', behavior: 'pierce', tag: '3穿翠绿泰拉剑气月牙波' },
+      { id: 'influx_waver', name: '波涌之刃 (Influx Waver)', cat: 'melee', baseAtk: 140, cooldown: 0.22, crit: 0.18, speed: 28, range: 28, color: '#06b6d4', shape: 'blade', behavior: 'pierce', tag: '2穿折跃激光剑气' },
+      { id: 'seedler', name: '种子弯刀 (Seedler)', cat: 'melee', baseAtk: 135, cooldown: 0.20, crit: 0.18, speed: 21, range: 22, color: '#4ade80', shape: 'orb', behavior: 'split', tag: '爆炸荆棘果分裂3枚飞刺' },
+      { id: 'pwnhammer', name: '神圣破魔大锤', cat: 'melee', baseAtk: 82, cooldown: 0.60, crit: 0.45, speed: 18, range: 14, color: '#facc15', shape: 'orb', behavior: 'pierce', tag: '2穿神圣震荡爆破冲击' },
+      { id: 'frost_hammer', name: '寒霜巨锤', cat: 'melee', baseAtk: 65, cooldown: 0.60, crit: 0.45, speed: 12, range: 4, color: '#38bdf8', shape: 'melee_arc', behavior: 'standard', tag: '高暴击强击退重锤弧斩' },
+      { id: 'starfury', name: '星怒圣剑', cat: 'melee', baseAtk: 65, cooldown: 0.30, crit: 0.18, speed: 26, range: 20, color: '#38bdf8', shape: 'star', behavior: 'rain', tag: '召唤天降冰蓝星陨炸裂' },
+      { id: 'bee_keeper', name: '养蜂人之剑', cat: 'melee', baseAtk: 55, cooldown: 0.28, crit: 0.18, speed: 16, range: 22, color: '#f59e0b', shape: 'bee', behavior: 'homing', tag: '释放3只追踪杀人蜂群' },
+      { id: 'enchanted_sword', name: '附魔圣剑', cat: 'melee', baseAtk: 50, cooldown: 0.30, crit: 0.18, speed: 24, range: 20, color: '#38bdf8', shape: 'blade', behavior: 'pierce', tag: '1穿附魔蓝光剑气' },
+      { id: 'mithril_sword', name: '重铸秘银剑', cat: 'melee', baseAtk: 45, cooldown: 0.35, crit: 0.35, speed: 14, range: 3, color: '#cbd5e1', shape: 'melee_arc', behavior: 'standard', tag: '高暴击近身斩击' },
+      { id: 'copper_shortsword', name: '传奇铜短剑', cat: 'melee', baseAtk: 25, cooldown: 0.15, crit: 0.18, speed: 14, range: 2.5, color: '#d97706', shape: 'melee_arc', behavior: 'standard', tag: '高频快速短刺' },
+      { id: 'iron_sword', name: '粗铁长剑', cat: 'melee', baseAtk: 20, cooldown: 0.45, crit: 0.18, speed: 14, range: 2.5, color: '#94a3b8', shape: 'melee_arc', behavior: 'standard', tag: '基础近战劈砍' },
+
+      // 枪炮与秘境远程 (weapon_ranged)
+      { id: 'twilight_morning_star', name: '暮色星辰破晓炮', cat: 'ranged', baseAtk: 260, cooldown: 0.15, crit: 0.10, speed: 54, range: 32, color: '#facc15', shape: 'star', behavior: 'pierce', tag: '2穿3.5m爆裂黄金流星' },
+      { id: 'abyssal_trident', name: '深渊海皇灭世三叉戟', cat: 'ranged', baseAtk: 215, cooldown: 0.18, crit: 0.32, speed: 50, range: 32, color: '#06b6d4', shape: 'trident', behavior: 'pierce', tag: '4穿超高速深海沧溟龙卷' },
+      { id: 'snow_queen_bow', name: '冰雪女王寒霜长弓', cat: 'ranged', baseAtk: 165, cooldown: 0.22, crit: 0.10, speed: 45, range: 26, color: '#38bdf8', shape: 'arrow', behavior: 'fan3', tag: '3连扇形1穿冰晶箭雨' },
+      { id: 'inferno_cannon', name: '深渊炼狱重型巨炮', cat: 'ranged', baseAtk: 160, cooldown: 0.65, crit: 0.10, speed: 25, range: 28, color: '#f97316', shape: 'rocket', behavior: 'explode', tag: '4.0m超大范围炽焰核爆' },
+      { id: 'last_prism', name: '终极棱镜 (Last Prism)', cat: 'ranged', baseAtk: 148, cooldown: 0.12, crit: 0.10, speed: 54, range: 36, color: '#f472b6', shape: 'prism', behavior: 'pierce', tag: '5穿高能聚变彩虹激光柱' },
+      { id: 'twilight_scepter', name: '暮色幽冥法杖', cat: 'ranged', baseAtk: 140, cooldown: 0.15, crit: 0.10, speed: 42, range: 32, color: '#a855f7', shape: 'star', behavior: 'standard', tag: '高频幽紫暮光星矢' },
+      { id: 'snowman_cannon', name: '雪人寒冰火箭炮', cat: 'ranged', baseAtk: 140, cooldown: 0.42, crit: 0.10, speed: 26, range: 30, color: '#f8fafc', shape: 'rocket', behavior: 'homing', tag: '追踪制导3.2m暴雪火箭' },
+      { id: 'vortex_beater', name: '漩涡机枪 (Vortex Beater)', cat: 'ranged', baseAtk: 132, cooldown: 0.10, crit: 0.35, speed: 48, range: 30, color: '#2dd4bf', shape: 'laser', behavior: 'vortex', tag: '极速弹流+每4发追踪导弹' },
+      { id: 'lifedrain_scepter', name: '巫妖嗜血夺魂法杖', cat: 'ranged', baseAtk: 120, cooldown: 0.22, crit: 0.10, speed: 40, range: 28, color: '#e11d48', shape: 'orb', behavior: 'standard', tag: '每击固定吸血+6 HP' },
+      { id: 'astral_staff', name: '星界爆裂法杖', cat: 'ranged', baseAtk: 120, cooldown: 0.32, crit: 0.10, speed: 35, range: 28, color: '#7c4dff', shape: 'rocket', behavior: 'explode', tag: '2.2m紫晶震爆奥术球' },
+      { id: 'siege_cannon', name: '攻城重型加农炮', cat: 'ranged', baseAtk: 115, cooldown: 1.10, crit: 0.10, speed: 20, range: 22, color: '#ff5722', shape: 'rocket', behavior: 'explode', tag: '消耗炮弹3.0m重火炮爆破' },
+      { id: 'sdmg', name: '太空海豚机枪 (S.D.M.G)', cat: 'ranged', baseAtk: 105, cooldown: 0.08, crit: 0.10, speed: 56, range: 34, color: '#38bdf8', shape: 'laser', behavior: 'standard', tag: '超高射速星海高频连射' },
+      { id: 'venus_magnum', name: '维纳斯左轮马格南', cat: 'ranged', baseAtk: 98, cooldown: 0.12, crit: 0.10, speed: 48, range: 30, color: '#f43f5e', shape: 'orb', behavior: 'standard', tag: '高威高速精准马格南弹' },
+      { id: 'terra_musket', name: '泰拉重型火枪', cat: 'ranged', baseAtk: 85, cooldown: 0.38, crit: 0.10, speed: 42, range: 26, color: '#00e676', shape: 'orb', behavior: 'standard', tag: '翠绿重型破甲弹' },
+      { id: 'heavy_revolver', name: '荒野左轮手枪', cat: 'ranged', baseAtk: 68, cooldown: 0.30, crit: 0.10, speed: 24, range: 16, color: '#ffea55', shape: 'orb', behavior: 'standard', tag: '均衡中程手枪弹' },
+      { id: 'frost_staff', name: '寒冰晶刺法杖', cat: 'ranged', baseAtk: 65, cooldown: 0.28, crit: 0.10, speed: 32, range: 24, color: '#00e5ff', shape: 'orb', behavior: 'standard', tag: '寒霜魔力飞弹' },
+      { id: 'chain_gun', name: '旋转加特林链炮', cat: 'ranged', baseAtk: 62, cooldown: 0.07, crit: 0.10, speed: 52, range: 28, color: '#fbbf24', shape: 'orb', behavior: 'standard', tag: '全武器最高射速扇形弹雨' },
+      { id: 'laser_rifle', name: '高频脉冲激光步枪', cat: 'ranged', baseAtk: 48, cooldown: 0.16, crit: 0.10, speed: 38, range: 20, color: '#00e5ff', shape: 'laser', behavior: 'standard', tag: '零重力脉冲蓝激光' },
+      { id: 'flintlock_pistol', name: '经典燧发手枪', cat: 'ranged', baseAtk: 40, cooldown: 0.35, crit: 0.10, speed: 24, range: 14, color: '#ffaa33', shape: 'orb', behavior: 'standard', tag: '复古火药铁弹' },
+
+      // 独立复活的魔法星杖类 (magic)
+      { id: 'nebula_arcanum', name: '星云奥秘 (Nebula Arcanum)', cat: 'magic', baseAtk: 185, cooldown: 0.20, crit: 0.50, speed: 32, range: 30, color: '#c084fc', shape: 'star', behavior: 'homing', tag: '强追踪+2.4m奥术星云爆破' },
+      { id: 'stardust_dragon_staff', name: '星尘之龙法杖', cat: 'magic', baseAtk: 150, cooldown: 0.22, crit: 0.40, speed: 34, range: 30, color: '#38bdf8', shape: 'star', behavior: 'homing2', tag: '双追踪星尘龙灵各2次穿透' },
+      { id: 'ancient_light_staff', name: '远古圣光法杖', cat: 'magic', baseAtk: 125, cooldown: 0.16, crit: 0.10, speed: 44, range: 28, color: '#fef08a', shape: 'star', behavior: 'standard', tag: '圣辉光爆连射' },
+      { id: 'pygmy_staff', name: '丛林矮人召唤杖', cat: 'magic', baseAtk: 110, cooldown: 0.30, crit: 0.10, speed: 28, range: 24, color: '#10b981', shape: 'arrow', behavior: 'standard', tag: '翠绿毒矛狙击' },
+      { id: 'bat_scepter', name: '夜翼蝙蝠权杖', cat: 'magic', baseAtk: 88, cooldown: 0.14, crit: 0.10, speed: 34, range: 24, color: '#d946ef', shape: 'bee', behavior: 'homing', tag: '高频追踪绯红吸血蝙蝠' },
+      { id: 'razorpine', name: '剃刀松魔杖', cat: 'magic', baseAtk: 76, cooldown: 0.10, crit: 0.10, speed: 46, range: 26, color: '#22c55e', shape: 'arrow', behavior: 'standard', tag: '极速高频率松针弹幕' },
+    ];
+
+    const ACCESSORIES = [
+      { id: 'none', name: '-- 空槽位 --', atk: 0, def: 0, hp: 0, spd: 0, crit: 0, dmgMult: 0, regen: 0, perks: [] },
+      { id: 'terrawalker_boots', name: '泰拉漫步者神话战靴', atk: 0, def: 24, hp: 60, spd: 0.75, crit: 0.15, dmgMult: 0, regen: 0, perks: ['water', 'lava', 'diving'] },
+      { id: 'ankh_shield', name: '泰拉永恒十字章神盾', atk: 0, def: 36, hp: 90, spd: 0, crit: 0, dmgMult: 0, regen: 1.5, perks: ['knockback', 'poison', 'iframe'] },
+      { id: 'destroyer_emblem', name: '毁灭者战神徽章', atk: 35, def: 0, hp: 0, spd: 0, crit: 0.25, dmgMult: 0.45, regen: 0, perks: [] },
+      { id: 'celestial_shell', name: '天界全能神圣贝壳', atk: 25, def: 25, hp: 60, spd: 0.25, crit: 0.15, dmgMult: 0, regen: 1.5, perks: ['diving'] },
+      { id: 'void_prism', name: '深渊星渊棱镜核心', atk: 28, def: 18, hp: 60, spd: 0, crit: 0.20, dmgMult: 0.20, regen: 0, perks: ['diving'] },
+      { id: 'star_veil', name: '星辰十字面纱', atk: 0, def: 12, hp: 40, spd: 0, crit: 0, dmgMult: 0, regen: 0, perks: ['star', 'iframe'] },
+      { id: 'avenger_emblem', name: '复仇者全能徽章', atk: 25, def: 0, hp: 0, spd: 0, crit: 0.10, dmgMult: 0.35, regen: 0, perks: [] },
+      { id: 'ankh_charm', name: '神圣十字章护身符', atk: 0, def: 16, hp: 50, spd: 0, crit: 0, dmgMult: 0, regen: 1.5, perks: ['poison', 'iframe'] },
+      { id: 'celestial_wings', name: '星界天翼', atk: 0, def: 10, hp: 0, spd: 0.60, crit: 0, dmgMult: 0, regen: 0, perks: [] },
+      { id: 'fiery_armor', name: '炽焰熔火重甲', atk: 0, def: 30, hp: 80, spd: 0, crit: 0.10, dmgMult: 0, regen: 2.5, perks: ['lava'] },
+      { id: 'diving_helmet', name: '深海铜质潜水头盔', atk: 0, def: 12, hp: 30, spd: 0, crit: 0, dmgMult: 0, regen: 0, perks: ['diving'] },
+      { id: 'bezoar', name: '翡翠牛黄解毒石', atk: 0, def: 8, hp: 20, spd: 0, crit: 0, dmgMult: 0, regen: 0, perks: ['poison'] },
+      { id: 'lava_charm', name: '熔岩护符', atk: 0, def: 6, hp: 0, spd: 0, crit: 0, dmgMult: 0, regen: 0, perks: ['lava'] },
+    ];
+
+    const ACC_PREFIXES = {
+      none: { name: '无词缀', def: 0, hp: 0, dmgMult: 0, crit: 0, spd: 0, atkSpd: 1.0 },
+      warding: { name: '护佑 (+10防/+25HP)', def: 10, hp: 25, dmgMult: 0, crit: 0, spd: 0, atkSpd: 1.0 },
+      menacing: { name: '险恶 (+10%全伤)', def: 0, hp: 0, dmgMult: 0.10, crit: 0, spd: 0, atkSpd: 1.0 },
+      lucky: { name: '幸运 (+5%暴击)', def: 0, hp: 0, dmgMult: 0, crit: 0.05, spd: 0, atkSpd: 1.0 },
+      quick: { name: '轻灵 (+8%移速)', def: 0, hp: 0, dmgMult: 0, crit: 0, spd: 0.08, atkSpd: 1.0 },
+      violent: { name: '暴力 (+10%攻速)', def: 0, hp: 0, dmgMult: 0, crit: 0, spd: 0, atkSpd: 1.10 },
+    };
+
+    const WEAPON_PREFIXES = {
+      none: { dmg: 1.0, spd: 1.0, crit: 0 },
+      legendary: { dmg: 1.15, spd: 1.10, crit: 0.08 },
+      godly: { dmg: 1.15, spd: 1.0, crit: 0.05 },
+      demonic: { dmg: 1.15, spd: 1.0, crit: 0.05 },
+      rapid: { dmg: 1.0, spd: 1.15, crit: 0 },
+      heavy: { dmg: 1.10, spd: 0.90, crit: 0 },
+      broken: { dmg: 0.70, spd: 0.80, crit: 0 },
+    };
+
+    let selectedWeapon = WEAPONS[0];
+    let currentFilter = 'all';
+    let weaponPrefix = 'legendary';
+    let autoFire = false;
+    let equippedSlots = [
+      { id: 'terrawalker_boots', prefix: 'quick' },
+      { id: 'ankh_shield', prefix: 'warding' },
+      { id: 'destroyer_emblem', prefix: 'menacing' },
+      { id: 'celestial_shell', prefix: 'violent' },
+      { id: 'void_prism', prefix: 'lucky' },
+    ];
+
+    function computeAccBonuses() {
+      const seen = new Set();
+      const b = { atk: 0, def: 0, hp: 0, spd: 0, crit: 0, dmgMult: 1.0, atkSpd: 1.0, regen: 0, perks: new Set() };
+      equippedSlots.forEach(slot => {
+        const acc = ACCESSORIES.find(a => a.id === slot.id);
+        if (!acc || acc.id === 'none') return;
+        if (!seen.has(acc.id)) {
+          seen.add(acc.id);
+          b.atk += acc.atk;
+          b.def += acc.def;
+          b.hp += acc.hp;
+          b.spd += acc.spd;
+          b.crit += acc.crit;
+          b.dmgMult += acc.dmgMult;
+          b.regen += acc.regen;
+          acc.perks.forEach(p => b.perks.add(p));
+        }
+        const pfx = ACC_PREFIXES[slot.prefix] || ACC_PREFIXES.none;
+        b.def += pfx.def;
+        b.hp += pfx.hp;
+        b.dmgMult += pfx.dmgMult;
+        b.crit += pfx.crit;
+        b.spd += pfx.spd;
+        b.atkSpd *= pfx.atkSpd;
+      });
+      if (document.getElementById('chk-golden-apple').checked) {
+        b.hp += 50;
+        b.regen += 3.0;
+        b.perks.add('apple');
+      }
+      return b;
+    }
+
+    function computeWeaponStats(w, acc) {
+      const wp = WEAPON_PREFIXES[weaponPrefix] || WEAPON_PREFIXES.none;
+      const flatAtk = w.cat === 'melee' ? acc.atk : Math.round(acc.atk * 0.85);
+      const hitDmg = Math.round((w.baseAtk + flatAtk) * wp.dmg * acc.dmgMult);
+      const baseCrit = w.cat === 'melee' ? (w.crit + 0.18) : (0.10 + w.crit);
+      const critChance = Math.min(0.95, baseCrit + acc.crit + wp.crit);
+      const minCd = w.cat === 'melee' ? 0.11 : 0.06;
+      const cd = Math.max(minCd, (w.cooldown / wp.spd) / acc.atkSpd);
+      const shotsPerTrigger = w.behavior === 'fan3' ? 3 * 0.65
+        : w.behavior === 'homing2' ? 2 * 0.68
+        : w.behavior === 'vortex' ? 1.36
+        : w.behavior === 'rain' ? 2.5
+        : w.behavior === 'zenith' ? 2.4
+        : 1.0;
+      const expectedPerTrigger = hitDmg * shotsPerTrigger * (1 + critChance * 0.5);
+      const dps = Math.round(expectedPerTrigger / cd);
+      return { hitDmg, critChance, cd, dps };
+    }
+
+    function renderWeaponList() {
+      const el = document.getElementById('weapon-list');
+      el.innerHTML = '';
+      const acc = computeAccBonuses();
+      const filtered = WEAPONS.filter(w => currentFilter === 'all' || w.cat === currentFilter);
+      filtered.forEach(w => {
+        const st = computeWeaponStats(w, acc);
+        const div = document.createElement('div');
+        div.className = 'weapon-item' + (w.id === selectedWeapon.id ? ' active' : '');
+        div.innerHTML = `
+          <div class="weapon-head">
+            <span style="color:${w.color}">${w.name}</span>
+            <span style="color:#facc15; font-size:12px;">DPS ${st.dps.toLocaleString()}</span>
+          </div>
+          <div class="weapon-meta">
+            <span>基伤 ${w.baseAtk} · 攻速 ${(1/st.cd).toFixed(1)}/s</span>
+            <span>${w.tag}</span>
+          </div>
+        `;
+        div.onclick = () => {
+          selectedWeapon = w;
+          renderWeaponList();
+          updateTelemetry();
+        };
+        el.appendChild(div);
+      });
+    }
+
+    function renderAccessorySlots() {
+      const container = document.getElementById('acc-slots-container');
+      container.innerHTML = '';
+      equippedSlots.forEach((slot, idx) => {
+        const card = document.createElement('div');
+        card.className = 'slot-card';
+        const accOptions = ACCESSORIES.map(a => `<option value="${a.id}" ${a.id === slot.id ? 'selected' : ''}>${a.name}</option>`).join('');
+        const pfxOptions = Object.entries(ACC_PREFIXES).map(([k, v]) => `<option value="${k}" ${k === slot.prefix ? 'selected' : ''}>${v.name}</option>`).join('');
+        card.innerHTML = `
+          <div style="font-size:11px; color:var(--muted);">饰品槽 #${idx + 1}</div>
+          <div class="slot-row">
+            <select data-slot="${idx}" data-kind="acc">${accOptions}</select>
+            <select data-slot="${idx}" data-kind="pfx">${pfxOptions}</select>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      container.querySelectorAll('select').forEach(sel => {
+        sel.onchange = (e) => {
+          const i = Number(e.target.dataset.slot);
+          const kind = e.target.dataset.kind;
+          if (kind === 'acc') equippedSlots[i].id = e.target.value;
+          else equippedSlots[i].prefix = e.target.value;
+          updateAllViews();
+        };
+      });
+    }
+
+    function updateTelemetry() {
+      const acc = computeAccBonuses();
+      const st = computeWeaponStats(selectedWeapon, acc);
+      document.getElementById('selected-weapon-title').textContent = `🎯 ${selectedWeapon.name}`;
+      document.getElementById('selected-weapon-behavior').textContent = selectedWeapon.tag;
+      document.getElementById('kpi-weapons').textContent = `${WEAPONS.length} / 100%`;
+      document.getElementById('kpi-theo-dps').textContent = st.dps.toLocaleString();
+
+      const bossHp = Number(document.getElementById('boss-ttk-select').value);
+      const ttk = (bossHp / Math.max(1, st.dps)).toFixed(1);
+      document.getElementById('kpi-ttk').textContent = `${ttk} 秒`;
+
+      const totalHp = 100 + acc.hp;
+      const mitigation = (1 - 100 / (100 + acc.def * 1.4)) * 100;
+      const totalMit = acc.perks.has('apple') ? Math.min(92, mitigation + (100 - mitigation) * 0.30) : mitigation;
+      document.getElementById('player-stats-box').innerHTML = `
+        <div class="stat-cell"><span>❤️ 生命上限</span><strong style="color:#f87171">${totalHp}</strong></div>
+        <div class="stat-cell"><span>🛡️ 防御 / 免伤</span><strong style="color:#60a5fa">${acc.def} (${totalMit.toFixed(1)}%)</strong></div>
+        <div class="stat-cell"><span>⚔️ 攻强倍率</span><strong style="color:#facc15">${Math.round(acc.dmgMult * 100)}% (+${acc.atk})</strong></div>
+        <div class="stat-cell"><span>🎯 实战暴击率</span><strong style="color:#34d399">${Math.round(st.critChance * 100)}%</strong></div>
+        <div class="stat-cell"><span>⚡ 移速加成</span><strong style="color:#38bdf8">+${Math.round(acc.spd * 100)}%</strong></div>
+        <div class="stat-cell"><span>💚 每秒再生</span><strong style="color:#4ade80">${acc.regen.toFixed(1)}/s</strong></div>
+      `;
+
+      const perks = [
+        ['water', '🌊 水上踏浪行走'],
+        ['lava', '🔥 熔岩完全免疫'],
+        ['diving', '🫧 深海减压 -82%耗氧'],
+        ['knockback', '🪨 稳态防击退+12%减伤'],
+        ['poison', '🧪 剧毒完全免疫'],
+        ['iframe', '⏱️ 受击无敌帧 2.4s'],
+        ['star', '🌠 受击天降星雨反击'],
+        ['apple', '🍎 神圣金苹果守护'],
+      ];
+      document.getElementById('perk-matrix').innerHTML = perks.map(([k, label]) =>
+        `<div class="perk-pill ${acc.perks.has(k) ? 'on' : ''}">${label}</div>`
+      ).join('');
+    }
+
+    function renderDpsRanking() {
+      const acc = computeAccBonuses();
+      const rows = WEAPONS.map(w => ({ w, st: computeWeaponStats(w, acc) })).sort((a, b) => b.st.dps - a.st.dps);
+      const maxDps = rows[0].st.dps;
+      document.getElementById('dps-ranking-list').innerHTML = rows.map(({ w, st }) => {
+        const pct = Math.max(2, Math.round((st.dps / maxDps) * 100));
+        return `
+          <div class="dps-bar-row">
+            <div style="font-weight:600; color:${w.color}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${w.name}</div>
+            <div style="color:var(--muted);">${w.cat === 'melee' ? '近战' : w.cat === 'ranged' ? '远程' : '魔法'} · ${st.hitDmg}伤</div>
+            <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;"></div></div>
+            <div style="text-align:right; font-weight:700; color:var(--gold);">${st.dps.toLocaleString()} DPS</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateAllViews() {
+      renderWeaponList();
+      updateTelemetry();
+      renderDpsRanking();
+    }
+
+    // Canvas Live Projectile Physics Simulator
+    const canvas = document.getElementById('sandbox-canvas');
+    const ctx = canvas.getContext('2d');
+    const player = { x: 110, y: 230 };
+    let mousePos = { x: 560, y: 230 };
+    let mouseDown = false;
+    let fireCooldown = 0;
+    let vortexCount = 0;
+
+    let targets = [];
+    function resetTargets() {
+      targets = [
+        { x: 520, y: 145, baseY: 145, r: 22, phase: 0, speed: 1.4, label: '移动哨兵靶 A', hitFlash: 0 },
+        { x: 590, y: 230, baseY: 230, r: 26, phase: 1.2, speed: 0, label: '深渊利维坦靶', hitFlash: 0 },
+        { x: 520, y: 325, baseY: 325, r: 22, phase: 2.5, speed: -1.4, label: '移动哨兵靶 B', hitFlash: 0 },
+      ];
+    }
+    resetTargets();
+
+    const bullets = [];
+    const popups = [];
+    const explosions = [];
+    const dmgHistory = [];
+
+    function spawnBullet(x, y, ang, spd, dmg, isCrit, opts = {}) {
+      bullets.push({
+        x, y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd,
+        spd,
+        dmg,
+        isCrit,
+        color: opts.color || selectedWeapon.color,
+        shape: opts.shape || selectedWeapon.shape,
+        behavior: opts.behavior || selectedWeapon.behavior,
+        pierce: opts.pierce ?? (selectedWeapon.behavior === 'pierce' ? 3 : 0),
+        bounces: opts.bounces ?? (selectedWeapon.behavior === 'bounce' ? 3 : 0),
+        life: 0,
+        maxLife: 1.4,
+        returning: false,
+        hitSet: new Set(),
+      });
+    }
+
+    function triggerWeaponShot() {
+      const acc = computeAccBonuses();
+      const st = computeWeaponStats(selectedWeapon, acc);
+      fireCooldown = st.cd;
+      const baseAng = Math.atan2(mousePos.y - player.y, mousePos.x - player.x);
+      const isCrit = Math.random() < st.critChance;
+      const dmg = isCrit ? Math.round(st.hitDmg * 1.5) : st.hitDmg;
+      const spd = Math.max(240, selectedWeapon.speed * 13);
+
+      if (selectedWeapon.behavior === 'zenith') {
+        for (let k = -2; k <= 2; k++) {
+          spawnBullet(player.x, player.y, baseAng + k * 0.14, spd, Math.round(dmg * 0.55), isCrit, {
+            color: ['#38bdf8', '#facc15', '#4ade80', '#f472b6', '#a855f7'][k + 2],
+            behavior: 'boomerang',
+            pierce: 6,
+          });
+        }
+      } else if (selectedWeapon.behavior === 'fan3') {
+        for (let k = -1; k <= 1; k++) {
+          spawnBullet(player.x, player.y, baseAng + k * 0.14, spd, Math.round(dmg * 0.65), isCrit, { pierce: 1 });
+        }
+      } else if (selectedWeapon.behavior === 'homing2') {
+        for (let k = -1; k <= 1; k += 2) {
+          spawnBullet(player.x, player.y, baseAng + k * 0.18, spd, Math.round(dmg * 0.68), isCrit, { behavior: 'homing', pierce: 2 });
+        }
+      } else if (selectedWeapon.behavior === 'vortex') {
+        vortexCount++;
+        spawnBullet(player.x, player.y, baseAng + (Math.random() - 0.5) * 0.08, spd, dmg, isCrit, { behavior: 'standard' });
+        if (vortexCount % 4 === 0) {
+          spawnBullet(player.x, player.y, baseAng, 420, Math.round(dmg * 1.45), isCrit, { behavior: 'homing', shape: 'rocket', color: '#22d3ee' });
+        }
+      } else if (selectedWeapon.behavior === 'rain') {
+        const count = selectedWeapon.id === 'star_wrath' ? 3 : 1;
+        for (let s = 0; s < count; s++) {
+          const sx = mousePos.x + (s - 1) * 40 - 60;
+          const sy = 20;
+          const ang = Math.atan2(mousePos.y - sy, mousePos.x + (s - 1) * 28 - sx);
+          spawnBullet(sx, sy, ang, 520, dmg, isCrit, { shape: 'star', behavior: 'standard' });
+        }
+      } else if (selectedWeapon.id === 'bee_keeper') {
+        for (let k = -1; k <= 1; k++) {
+          spawnBullet(player.x, player.y, baseAng + k * 0.25, 260, Math.round(dmg * 0.68), isCrit, { behavior: 'homing' });
+        }
+      } else {
+        spawnBullet(player.x, player.y, baseAng, spd, dmg, isCrit, {
+          pierce: selectedWeapon.id === 'last_prism' ? 5 : selectedWeapon.id === 'abyssal_trident' ? 4 : selectedWeapon.behavior === 'pierce' ? 3 : 0,
+        });
+      }
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mousePos.x = ((e.clientX - rect.left) / rect.width) * canvas.width;
+      mousePos.y = ((e.clientY - rect.top) / rect.height) * canvas.height;
+    });
+    canvas.addEventListener('mousedown', () => { mouseDown = true; });
+    window.addEventListener('mouseup', () => { mouseDown = false; });
+
+    document.getElementById('btn-autofire').onclick = (e) => {
+      autoFire = !autoFire;
+      e.target.textContent = autoFire ? '🔁 自动连发试射：开' : '🔁 自动连发试射：关';
+      e.target.classList.toggle('active-toggle', autoFire);
+    };
+    document.getElementById('btn-reset-targets').onclick = resetTargets;
+    document.getElementById('btn-clear-dmg').onclick = () => { dmgHistory.length = 0; };
+    document.getElementById('weapon-prefix-select').onchange = (e) => { weaponPrefix = e.target.value; updateAllViews(); };
+    document.getElementById('boss-ttk-select').onchange = updateTelemetry;
+    document.getElementById('chk-golden-apple').onchange = updateTelemetry;
+    document.getElementById('btn-endgame-preset').onclick = () => {
+      equippedSlots = [
+        { id: 'terrawalker_boots', prefix: 'quick' },
+        { id: 'ankh_shield', prefix: 'warding' },
+        { id: 'destroyer_emblem', prefix: 'menacing' },
+        { id: 'celestial_shell', prefix: 'violent' },
+        { id: 'void_prism', prefix: 'lucky' },
+      ];
+      document.getElementById('chk-golden-apple').checked = true;
+      renderAccessorySlots();
+      updateAllViews();
+    };
+    document.getElementById('weapon-filters').querySelectorAll('button').forEach(btn => {
+      btn.onclick = () => {
+        document.getElementById('weapon-filters').querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.cat;
+        renderWeaponList();
+      };
+    });
+
+    let lastTs = performance.now();
+    function tick(now) {
+      const dt = Math.min(0.05, (now - lastTs) / 1000);
+      lastTs = now;
+
+      if (fireCooldown > 0) fireCooldown -= dt;
+      if ((mouseDown || autoFire) && fireCooldown <= 0) {
+        triggerWeaponShot();
+      }
+
+      // Move targets
+      targets.forEach(t => {
+        t.phase += dt * t.speed;
+        t.y = t.baseY + Math.sin(t.phase) * 55;
+        if (t.hitFlash > 0) t.hitFlash -= dt;
+      });
+
+      // Update bullets
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        b.life += dt;
+
+        if (b.behavior === 'boomerang' && !b.returning && b.life > 0.45) {
+          b.returning = true;
+          b.hitSet.clear();
+        }
+        if (b.returning) {
+          const ang = Math.atan2(player.y - b.y, player.x - b.x);
+          b.vx = Math.cos(ang) * b.spd;
+          b.vy = Math.sin(ang) * b.spd;
+          if (Math.hypot(player.x - b.x, player.y - b.y) < 16) { bullets.splice(i, 1); continue; }
+        }
+        if (b.behavior === 'homing') {
+          let best = null, bd = 9999;
+          for (const t of targets) {
+            if (b.hitSet.has(t)) continue;
+            const d = Math.hypot(t.x - b.x, t.y - b.y);
+            if (d < bd) { bd = d; best = t; }
+          }
+          if (best) {
+            const desired = Math.atan2(best.y - b.y, best.x - b.x);
+            const cur = Math.atan2(b.vy, b.vx);
+            let diff = desired - cur;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+            while (diff < -Math.PI) diff += Math.PI * 2;
+            const nextAng = cur + diff * Math.min(1, dt * 8.5);
+            b.vx = Math.cos(nextAng) * b.spd;
+            b.vy = Math.sin(nextAng) * b.spd;
+          }
+        }
+
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+
+        // Wall bounce for Meowmere
+        if (b.behavior === 'bounce' && b.bounces > 0) {
+          if (b.y < 14 || b.y > canvas.height - 14) { b.vy *= -1; b.bounces--; }
+          if (b.x > canvas.width - 14) { b.vx *= -1; b.bounces--; }
+        }
+
+        // Hit targets
+        let alive = b.life < b.maxLife && b.x >= -80 && b.x <= canvas.width + 80 && b.y >= -80 && b.y <= canvas.height + 80;
+        for (const t of targets) {
+          if (!alive || b.hitSet.has(t)) continue;
+          if (Math.hypot(t.x - b.x, t.y - b.y) <= t.r + 10) {
+            b.hitSet.add(t);
+            t.hitFlash = 0.1;
+            dmgHistory.push({ t: now / 1000, dmg: b.dmg });
+            popups.push({ x: t.x + (Math.random() - 0.5) * 18, y: t.y - 20, val: b.dmg, crit: b.isCrit, age: 0 });
+            if (b.behavior === 'explode' || b.shape === 'rocket' || b.id === 'star_wrath') {
+              explosions.push({ x: b.x, y: b.y, r: 44, color: b.color, age: 0 });
+            }
+            if (b.behavior === 'split') {
+              for (let k = -1; k <= 1; k++) {
+                const sa = Math.atan2(b.vy, b.vx) + k * 0.9;
+                spawnBullet(b.x, b.y, sa, 340, Math.round(b.dmg * 0.45), b.isCrit, { color: '#86efac', behavior: 'standard', pierce: 0 });
+              }
+            }
+            if (b.behavior === 'bounce' && b.bounces > 0) {
+              b.bounces--;
+              b.vx = -b.vx * 0.9;
+              b.vy += (Math.random() - 0.5) * 260;
+              b.color = ['#f472b6', '#facc15', '#4ade80', '#38bdf8', '#c084fc'][Math.floor(Math.random() * 5)];
+            } else if (b.pierce > 0) {
+              b.pierce--;
+            } else if (b.behavior !== 'boomerang') {
+              alive = false;
+            }
+          }
+        }
+        if (!alive) bullets.splice(i, 1);
+      }
+
+      // Compute 5s Live DPS
+      const nowSec = now / 1000;
+      while (dmgHistory.length && nowSec - dmgHistory[0].t > 5.0) dmgHistory.shift();
+      const total5s = dmgHistory.reduce((s, d) => s + d.dmg, 0);
+      const span = dmgHistory.length ? Math.max(0.8, nowSec - dmgHistory[0].t + 0.1) : 1;
+      document.getElementById('kpi-live-dps').textContent = Math.round(total5s / span).toLocaleString();
+
+      // Render Arena
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+      for (let gx = 0; gx < canvas.width; gx += 40) {
+        ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, canvas.height); ctx.stroke();
+      }
+      for (let gy = 0; gy < canvas.height; gy += 40) {
+        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(canvas.width, gy); ctx.stroke();
+      }
+
+      // Aim line
+      ctx.strokeStyle = 'rgba(250, 204, 21, 0.22)';
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath(); ctx.moveTo(player.x, player.y); ctx.lineTo(mousePos.x, mousePos.y); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Player
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath(); ctx.arc(player.x, player.y, 16, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#facc15';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('角色位', player.x, player.y + 30);
+
+      // Targets
+      targets.forEach(t => {
+        ctx.fillStyle = t.hitFlash > 0 ? '#ef4444' : '#1e293b';
+        ctx.strokeStyle = '#0ea5e9';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#bae6fd';
+        ctx.font = '11px sans-serif';
+        ctx.fillText(t.label, t.x, t.y + t.r + 14);
+      });
+
+      // Explosions
+      for (let i = explosions.length - 1; i >= 0; i--) {
+        const ex = explosions[i];
+        ex.age += dt;
+        if (ex.age > 0.25) { explosions.splice(i, 1); continue; }
+        ctx.globalAlpha = 1 - ex.age / 0.25;
+        ctx.fillStyle = ex.color;
+        ctx.beginPath(); ctx.arc(ex.x, ex.y, ex.r * (0.6 + ex.age * 2.5), 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      // Bullets
+      bullets.forEach(b => {
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(Math.atan2(b.vy, b.vx));
+        ctx.fillStyle = b.color;
+        ctx.shadowColor = b.color;
+        ctx.shadowBlur = 10;
+        if (b.shape === 'blade') {
+          ctx.beginPath(); ctx.arc(0, 0, 14, -Math.PI * 0.4, Math.PI * 0.4); ctx.lineWidth = 5; ctx.strokeStyle = b.color; ctx.stroke();
+        } else if (b.shape === 'prism' || b.shape === 'laser') {
+          ctx.fillRect(-14, -3, 28, 6);
+        } else if (b.shape === 'trident') {
+          ctx.fillRect(-14, -2, 24, 4);
+          ctx.fillRect(4, -7, 10, 2.5);
+          ctx.fillRect(4, 4.5, 10, 2.5);
+        } else if (b.shape === 'axe') {
+          ctx.rotate(now * 0.02);
+          ctx.fillRect(-10, -8, 20, 16);
+        } else if (b.shape === 'star') {
+          ctx.rotate(now * 0.015);
+          ctx.fillRect(-7, -7, 14, 14);
+        } else {
+          ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+      });
+
+      // Damage Popups
+      for (let i = popups.length - 1; i >= 0; i--) {
+        const p = popups[i];
+        p.age += dt;
+        p.y -= dt * 36;
+        if (p.age > 0.7) { popups.splice(i, 1); continue; }
+        ctx.globalAlpha = 1 - p.age / 0.7;
+        ctx.fillStyle = p.crit ? '#facc15' : '#f8fafc';
+        ctx.font = p.crit ? 'bold 16px sans-serif' : 'bold 12px sans-serif';
+        ctx.fillText(p.crit ? `${p.val}!` : `${p.val}`, p.x, p.y);
+        ctx.globalAlpha = 1;
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    document.getElementById('tab-all-btn').textContent = `全部 (${WEAPONS.length})`;
+    renderAccessorySlots();
+    updateAllViews();
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
